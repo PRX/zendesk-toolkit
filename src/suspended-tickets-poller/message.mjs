@@ -10,7 +10,7 @@ export default function msg(ticket) {
         type: "header",
         text: {
           type: "plain_text",
-          text: ticket.subject,
+          text: ticket.subject.slice(0, 150),
           emoji: true,
         },
       },
@@ -19,7 +19,7 @@ export default function msg(ticket) {
         elements: [
           {
             type: "plain_text",
-            text: `From: ${ticket.author.email}`,
+            text: `From: ${ticket.author.email.slice(0, 100)}`,
             emoji: true,
           },
         ],
