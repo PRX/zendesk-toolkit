@@ -1,0 +1,180 @@
+AWSTemplateFormatVersion: "2010-09-09"
+Transform: AWS::Serverless-2016-10-31
+Description: A collection of utilities that integrate with Zendesk
+
+Parameters:
+  PrxZendeskApiUsername: { Type: String }
+  PrxZendeskApiToken: { Type: String, NoEcho: true }
+  SlackAccessToken: { Type: String, NoEcho: true }
+  SlackChannelId: { Type: String }
+  SlackSigningSecret: { Type: String, NoEcho: true }
+
+Resources:
+  NodejsSlackSdkLambdaLayer:
+    Type: AWS::Serverless::LayerVersion
+    DeletionPolicy: Delete
+    UpdateReplacePolicy: Delete
+    Metadata:
+      BuildMethod: makefile
+    Properties:
+      Description: Slack SDK npm libraries for Node.js
+      ContentUri: lib/nodejs-slack-sdk
+      CompatibleRuntimes:
+        - nodejs20.x
+
+  SuspendedTicketsPollerFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      CodeUri: src/suspended-tickets-poller
+      Description: >-
+        Polls Zendesk for new suspended tickets and react when they are found,
+        like by sending notifications to Slack.
+      Environment:
+        Variables:
+          ZENDESK_API_USERNAME: !Ref PrxZendeskApiUsername
+          ZENDESK_API_TOKEN: !Ref PrxZendeskApiToken
+          SLACK_ACCESS_TOKEN: !Ref SlackAccessToken
+          SLACK_CHANNEL_ID: !Ref SlackChannelId
+          SUSPENDED_TICKET_CACHE_TABLE_NAME: !Ref SuspendedTicketsPollerCache
+      Events:
+        Poller:
+          Properties:
+            Description: Runs the Zendesk suspended tickets poller
+            Enabled: true
+            Schedule: rate(20 minutes)
+          Type: Schedule
+      Handler: index.handler
+      Layers:
+        - !Ref NodejsSlackSdkLambdaLayer
+      MemorySize: 128
+      Policies:
+        - Statement:
+            - Action:
+                - dynamodb:GetItem
+                - dynamodb:PutItem
+              Effect: Allow
+              Resource: !Sub arn:aws:dynamodb:${AWS::Region}:${AWS::AccountId}:table/${SuspendedTicketsPollerCache}
+          Version: "2012-10-17"
+      Runtime: nodejs20.x
+      Tags:
+        prx:meta:tagging-version: 2021-04-07
+        prx:cloudformation:stack-name: !Ref AWS::StackName
+        prx:cloudformation:stack-id: !Ref AWS::StackId
+        prx:ops:environment: Production
+        prx:dev:application: Zendesk Toolkit
+      Timeout: 16
+  SuspendedTicketsPollerLogGroup:
+    Type: AWS::Logs::LogGroup
+    DeletionPolicy: Delete
+    UpdateReplacePolicy: Delete
+    Properties:
+      LogGroupName: !Sub /aws/lambda/${SuspendedTicketsPollerFunction}
+      RetentionInDays: 14
+      Tags:
+        - { Key: prx:meta:tagging-version, Value: "2021-04-07" }
+        - { Key: prx:cloudformation:stack-name, Value: !Ref AWS::StackName }
+        - { Key: prx:cloudformation:stack-id, Value: !Ref AWS::StackId }
+        - { Key: prx:ops:environment, Value: Production }
+        - { Key: prx:dev:application, Value: Zendesk Toolkit }
+  SuspendedTicketsPollerErrorAlarm:
+    Type: AWS::CloudWatch::Alarm
+    Properties:
+      AlarmName: "MINOR [Zendesk] Suspended Tickets Poller <prod> EXPERIENCING ERRORS"
+      AlarmDescription: >-
+        The error rate on the Zendesk app suspended tickets poller has
+        exceeded 0.
+      ComparisonOperator: GreaterThanThreshold
+      Dimensions:
+        - Name: FunctionName
+          Value: !Ref SuspendedTicketsPollerFunction
+      EvaluationPeriods: 2
+      MetricName: Errors
+      Namespace: AWS/Lambda
+      Period: 60
+      Statistic: Sum
+      Threshold: 0
+      TreatMissingData: notBreaching
+
+  SuspendedTicketsPollerCache:
+    Type: AWS::DynamoDB::Table
+    DeletionPolicy: Delete
+    UpdateReplacePolicy: Delete
+    Properties:
+      AttributeDefinitions:
+        - AttributeName: suspension_id
+          AttributeType: S
+      BillingMode: PAY_PER_REQUEST
+      KeySchema:
+        - AttributeName: suspension_id
+          KeyType: HASH
+      SSESpecification:
+        SSEEnabled: false
+      Tags:
+        - { Key: prx:meta:tagging-version, Value: "2021-04-07" }
+        - { Key: prx:cloudformation:stack-name, Value: !Ref AWS::StackName }
+        - { Key: prx:cloudformation:stack-id, Value: !Ref AWS::StackId }
+        - { Key: prx:ops:environment, Value: Production }
+        - { Key: prx:dev:application, Value: Zendesk Toolkit }
+      TimeToLiveSpecification:
+        AttributeName: cache_expiration
+        Enabled: true
+
+  SlackInteractivityEndpointFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      CodeUri: src/slack-interactivity-endpoint
+      Description: >-
+        Polls Zendesk for new suspended tickets and react when they are found,
+        like by sending notifications to Slack.
+      Environment:
+        Variables:
+          ZENDESK_API_USERNAME: !Ref PrxZendeskApiUsername
+          ZENDESK_API_TOKEN: !Ref PrxZendeskApiToken
+          SLACK_ACCESS_TOKEN: !Ref SlackAccessToken
+          SLACK_SIGNING_SECRET: !Ref SlackSigningSecret
+      FunctionUrlConfig:
+        AuthType: NONE
+        InvokeMode: BUFFERED
+      Handler: index.handler
+      Layers:
+        - !Ref NodejsSlackSdkLambdaLayer
+      MemorySize: 128
+      Runtime: nodejs20.x
+      Tags:
+        prx:meta:tagging-version: 2021-04-07
+        prx:cloudformation:stack-name: !Ref AWS::StackName
+        prx:cloudformation:stack-id: !Ref AWS::StackId
+        prx:ops:environment: Production
+        prx:dev:application: Zendesk Toolkit
+      Timeout: 16
+  SlackInteractivityEndpointLogGroup:
+    Type: AWS::Logs::LogGroup
+    DeletionPolicy: Delete
+    UpdateReplacePolicy: Delete
+    Properties:
+      LogGroupName: !Sub /aws/lambda/${SlackInteractivityEndpointFunction}
+      RetentionInDays: 14
+      Tags:
+        - { Key: prx:meta:tagging-version, Value: "2021-04-07" }
+        - { Key: prx:cloudformation:stack-name, Value: !Ref AWS::StackName }
+        - { Key: prx:cloudformation:stack-id, Value: !Ref AWS::StackId }
+        - { Key: prx:ops:environment, Value: Production }
+        - { Key: prx:dev:application, Value: Zendesk Toolkit }
+  SlackInteractivityEndpointErrorAlarm:
+    Type: AWS::CloudWatch::Alarm
+    Properties:
+      AlarmName: "MINOR [Zendesk] Slack Interactivity <prod> EXPERIENCING ERRORS"
+      AlarmDescription: >-
+        The error rate on the Zendesk app Slack interactivity endpoint has
+        exceeded 0.
+      ComparisonOperator: GreaterThanThreshold
+      Dimensions:
+        - Name: FunctionName
+          Value: !Ref SlackInteractivityEndpointFunction
+      EvaluationPeriods: 2
+      MetricName: Errors
+      Namespace: AWS/Lambda
+      Period: 60
+      Statistic: Sum
+      Threshold: 0
+      TreatMissingData: notBreaching
