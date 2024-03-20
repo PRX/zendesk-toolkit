@@ -57,7 +57,7 @@ export default function msg(ticket) {
               },
               text: {
                 type: "plain_text",
-                text: `Are you sure you want to delete this ticket:\n"${ticket.subject}"?\n\nThe ticket will be deleted immediately and this cannot be undone.`,
+                text: `Are you sure you want to delete this ticket:\n"${ticket.subject.slice(0, 150)}"?\n\nThe ticket will be deleted immediately and this cannot be undone.`,
               },
               confirm: {
                 type: "plain_text",
