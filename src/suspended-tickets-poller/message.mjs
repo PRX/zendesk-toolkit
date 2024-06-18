@@ -10,7 +10,7 @@ export default function msg(ticket) {
         type: "header",
         text: {
           type: "plain_text",
-          text: ticket.subject.slice(0, 150),
+          text: (ticket.subject || "(No subject)").slice(0, 150),
           emoji: true,
         },
       },
@@ -31,7 +31,7 @@ export default function msg(ticket) {
         type: "section",
         text: {
           type: "mrkdwn",
-          text: ticket.content.slice(0, 1000),
+          text: (ticket.content || "(No content)").slice(0, 1000),
         },
       },
       {
