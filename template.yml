@@ -20,7 +20,7 @@ Resources:
       Description: Slack SDK npm libraries for Node.js
       ContentUri: lib/nodejs-slack-sdk
       CompatibleRuntimes:
-        - nodejs20.x
+        - nodejs22.x
 
   SuspendedTicketsPollerFunction:
     Type: AWS::Serverless::Function
