@@ -36,13 +36,13 @@ Resources:
           SLACK_ACCESS_TOKEN: !Ref SlackAccessToken
           SLACK_CHANNEL_ID: !Ref SlackChannelId
           SUSPENDED_TICKET_CACHE_TABLE_NAME: !Ref SuspendedTicketsPollerCache
-      Events:
-        Poller:
-          Properties:
-            Description: Runs the Zendesk suspended tickets poller
-            Enabled: true
-            Schedule: rate(20 minutes)
-          Type: Schedule
+      # Events:
+      #   Poller:
+      #     Properties:
+      #       Description: Runs the Zendesk suspended tickets poller
+      #       Enabled: true
+      #       Schedule: rate(20 minutes)
+      #     Type: Schedule
       Handler: index.handler
       Layers:
         - !Ref NodejsSlackSdkLambdaLayer
