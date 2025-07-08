@@ -24,15 +24,9 @@
     "@slack/web-api": "*"
   },
   "devDependencies": {
+    "@biomejs/biome": "*",
     "@types/node": "*",
-    "eslint": "*",
-    "eslint-config-airbnb-base": "*",
-    "eslint-config-prettier": "*",
-    "eslint-plugin-import": "*",
-    "eslint-plugin-jest": "*",
-    "eslint-plugin-prettier": "*",
     "jsdoc": "*",
-    "prettier": "*",
     "typescript": "*",
     "yarn": "*"
   }
