@@ -1,11 +1,12 @@
 /* eslint-disable no-await-in-loop */
-import { WebClient } from "@slack/web-api";
+
 import {
   DynamoDBClient,
   GetItemCommand,
   PutItemCommand,
 } from "@aws-sdk/client-dynamodb";
 import { marshall } from "@aws-sdk/util-dynamodb";
+import { WebClient } from "@slack/web-api";
 import ticketMessage from "./message.mjs";
 
 const dynamodbClient = new DynamoDBClient({ region: process.env.AWS_REGION });
@@ -60,7 +61,7 @@ export const handler = async () => {
               // Expire the cache in 7 days. If any suspended tickets haven't
               // been deleted or recovered after 7 days, they will generate a
               // new notification in Slack so they don't get lost
-              cache_expiration: Math.round(+new Date() / 1000) + 86400 * 7,
+              cache_expiration: Math.round(Date.now() / 1000) + 86400 * 7,
             }),
           }),
         );

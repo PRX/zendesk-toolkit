@@ -1,7 +1,7 @@
 import { createHmac } from "node:crypto";
 import deleteTicket from "./delete.mjs";
-import recoverTicket from "./recover.mjs";
 import ignoreTicket from "./ignore.mjs";
+import recoverTicket from "./recover.mjs";
 
 export const handler = async (event) => {
   console.info("Received Slack interaction");
@@ -48,7 +48,7 @@ export const handler = async (event) => {
 
   try {
     payload = JSON.parse(params.get("payload"));
-  } catch (error) {
+  } catch (_error) {
     return { statusCode: 200 };
   }
 
