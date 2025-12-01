@@ -20,7 +20,7 @@ Resources:
       Description: Slack SDK npm libraries for Node.js
       ContentUri: lib/nodejs-slack-sdk
       CompatibleRuntimes:
-        - nodejs22.x
+        - nodejs24.x
 
   SuspendedTicketsPollerFunction:
     Type: AWS::Serverless::Function
@@ -55,7 +55,7 @@ Resources:
               Effect: Allow
               Resource: !Sub arn:aws:dynamodb:${AWS::Region}:${AWS::AccountId}:table/${SuspendedTicketsPollerCache}
           Version: "2012-10-17"
-      Runtime: nodejs22.x
+      Runtime: nodejs24.x
       Tags:
         prx:meta:tagging-version: 2021-04-07
         prx:cloudformation:stack-name: !Ref AWS::StackName
@@ -145,7 +145,7 @@ Resources:
       Layers:
         - !Ref NodejsSlackSdkLambdaLayer
       MemorySize: 128
-      Runtime: nodejs22.x
+      Runtime: nodejs24.x
       Tags:
         prx:meta:tagging-version: 2021-04-07
         prx:cloudformation:stack-name: !Ref AWS::StackName
